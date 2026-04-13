@@ -11,7 +11,6 @@ st.markdown("""
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
 
-/* Title */
 .title {
     font-size: 42px;
     font-weight: bold;
@@ -25,7 +24,6 @@ footer {visibility: hidden;}
     margin-bottom: 20px;
 }
 
-/* Cards */
 .card {
     padding: 20px;
     border-radius: 15px;
@@ -34,7 +32,6 @@ footer {visibility: hidden;}
     text-align: center;
 }
 
-/* Buttons */
 .stButton > button {
     border-radius: 10px;
     height: 3em;
@@ -44,23 +41,19 @@ footer {visibility: hidden;}
     border: none;
 }
 
-/* LIGHT SIDEBAR */
 [data-testid="stSidebar"] {
     background-color: #f8f9fa !important;
-    border-right: 1px solid #e5e7eb;
 }
 
-/* Sidebar text */
 [data-testid="stSidebar"] * {
     color: #1f1f1f !important;
 }
-
 </style>
 """, unsafe_allow_html=True)
 
-# -----------------------------
+
 # LOGIN SYSTEM
-# -----------------------------
+
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
@@ -71,7 +64,7 @@ def login():
     password = st.text_input("Password", type="password")
 
     if st.button("Login"):
-        if username == "Himank" and password == "himank123":
+        if username == "JECRC" and password == "jecrc@123":
             st.session_state.logged_in = True
             st.success("Login successful")
             st.rerun()
@@ -95,11 +88,13 @@ if os.path.exists("attendance.csv"):
 else:
     df = pd.DataFrame(columns=["Name","Date","Time"])
 
+# -----------------------------
+# HEADER
+# -----------------------------
 st.markdown('<div class="title">📸 Smart Attendance System</div>', unsafe_allow_html=True)
 st.markdown('<div class="subtitle">AI-powered Face Recognition Dashboard</div>', unsafe_allow_html=True)
 
 # DASHBOARD CARDS
-
 col1, col2, col3 = st.columns(3)
 
 with col1:
@@ -111,9 +106,9 @@ with col2:
 with col3:
     st.markdown('<div class="card">🟢<h3>Active</h3>Status</div>', unsafe_allow_html=True)
 
-# -----------------------------
+
 # SIDEBAR
-# -----------------------------
+
 st.sidebar.title("📌 Menu")
 
 menu = st.sidebar.radio("Navigate", [
@@ -127,9 +122,9 @@ if st.sidebar.button("🚪 Logout"):
     st.session_state.logged_in = False
     st.rerun()
 
-# -----------------------------
+
 # TAKE ATTENDANCE
-# -----------------------------
+
 if menu == "📸 Take Attendance":
 
     st.image("./JECRC-Building.jpg", width=900)
@@ -148,11 +143,17 @@ if menu == "📸 Take Attendance":
     with col2:
         if st.button("🚀 Start Attendance"):
             st.warning("Press ESC to stop camera")
-            subprocess.run(["python", "recognize.py"])
 
-# -----------------------------
+            try:
+                with st.spinner("Starting camera..."):
+                    subprocess.run(["python", "recognize.py"])
+                st.success("Attendance process finished")
+            except Exception as e:
+                st.error(f"Error: {e}")
+
+
 # ATTENDANCE RECORDS
-# -----------------------------
+
 elif menu == "📅 Attendance Records":
 
     st.subheader("Attendance Viewer")
@@ -178,9 +179,9 @@ elif menu == "📅 Attendance Records":
                        merged.to_csv(index=False),
                        "attendance.csv")
 
-# -----------------------------
+
 # MANAGE STUDENTS
-# -----------------------------
+
 elif menu == "👨‍🎓 Manage Students":
 
     st.subheader("Student Management")
@@ -200,20 +201,35 @@ elif menu == "👨‍🎓 Manage Students":
         submit = st.form_submit_button("Register")
 
     if submit:
-        if name and dept and sem and section:
+        if not (name and dept and sem and section):
+            st.warning("Please fill all fields")
+
+        elif name in students_df["Name"].values:
+            st.warning("Student already registered")
+
+        else:
             from enroll import enroll
-            result = enroll(name)
+
+            with st.spinner("Capturing face... Look at camera"):
+                result = enroll(name)
 
             if result == "duplicate":
-                st.error("Face already exists")
-            else:
+                st.error("⚠️ Face already exists")
+
+            elif result == "no_face":
+                st.error("❌ No face detected. Try again")
+
+            elif result == "success":
                 new_row = pd.DataFrame([[name, dept, sem, section, gender]],
                     columns=["Name","Department","Semester","Section","Gender"])
 
                 students_df = pd.concat([students_df, new_row], ignore_index=True)
                 students_df.to_csv("students.csv", index=False)
 
-                st.success("Student Registered")
+                st.success("✅ Student Registered Successfully")
+
+            else:
+                st.error("Something went wrong")
 
     st.markdown("### Students List")
     st.dataframe(students_df, use_container_width=True)
@@ -229,17 +245,17 @@ elif menu == "👨‍🎓 Manage Students":
             if os.path.exists(file):
                 os.remove(file)
 
-            st.success("Deleted")
+            st.success(f"✅ {selected} deleted successfully")
 
-# -----------------------------
+
 # ANALYTICS
-# -----------------------------
 elif menu == "📊 Analytics":
 
     st.subheader("Analytics Dashboard")
 
     col1, col2 = st.columns(2)
     col1.metric("📊 Total Records", len(df))
+
     avg = round(len(df) / max(len(students_df), 1), 1)
     col2.metric("📈 Avg per Student", avg)
 
