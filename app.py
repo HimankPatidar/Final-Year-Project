@@ -75,9 +75,8 @@ if not st.session_state.logged_in:
     login()
     st.stop()
 
-# -----------------------------
 # LOAD DATA
-# -----------------------------
+
 if os.path.exists("students.csv"):
     students_df = pd.read_csv("students.csv")
 else:
@@ -88,9 +87,7 @@ if os.path.exists("attendance.csv"):
 else:
     df = pd.DataFrame(columns=["Name","Date","Time"])
 
-# -----------------------------
 # HEADER
-# -----------------------------
 st.markdown('<div class="title">📸 Smart Attendance System</div>', unsafe_allow_html=True)
 st.markdown('<div class="subtitle">AI-powered Face Recognition Dashboard</div>', unsafe_allow_html=True)
 
